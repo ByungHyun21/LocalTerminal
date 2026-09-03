@@ -27,4 +27,7 @@ contextBridge.exposeInMainWorld('terminal', {
     ipcRenderer.on('ssh-status', handler);
     return () => ipcRenderer.removeListener('ssh-status', handler);
   },
+  // clipboard
+  readClipboard: () => ipcRenderer.invoke('clipboard:readText'),
+  writeClipboard: (text) => ipcRenderer.invoke('clipboard:writeText', text),
 });

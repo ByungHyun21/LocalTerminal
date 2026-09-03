@@ -471,6 +471,36 @@ select:focus, input:focus { border-color: var(--accent); }
   justify-content: center;
 }
 
+.ctx-menu {
+  position: fixed;
+  z-index: 40;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 130px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.ctx-menu[hidden] { display: none; }
+
+.ctx-item {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ctx-item:hover:not(:disabled) { background: var(--panel2); }
+.ctx-item:disabled { color: var(--muted); opacity: 0.5; cursor: default; }
+
+
 .backdrop[hidden] { display: none; }
 
 .dialog {

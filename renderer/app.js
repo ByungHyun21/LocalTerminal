@@ -233,6 +233,9 @@ const els = {
   overlay: $('overlay'),
   overlayMsg: $('overlayMsg'),
   langFlag: $('langFlag'),
+  ctxMenu: $('ctxMenu'),
+  ctxCopy: $('ctxCopy'),
+  ctxPaste: $('ctxPaste'),
   btnHideSidebar: $('btnHideSidebar'),
   btnShowSidebar: $('btnShowSidebar'),
   langMenu: $('langMenu'),
@@ -296,7 +299,8 @@ const LOCALES = {
       'sidebar.new': 'New session',
       'sidebar.hide': '« Hide sessions',
       'sidebar.show': 'Show sessions',
-      'sidebar.empty': 'No saved sessions.\nAdd one with the + button.',
+      'context.copy': 'Copy',
+      'context.paste': 'Paste',
       'toolbar.theme': 'Theme',
       'toolbar.fontSize': 'Font size',
       'toolbar.fontMinus': 'Smaller (Ctrl + -)',
@@ -349,7 +353,8 @@ const LOCALES = {
       'sidebar.new': '새 세션 추가',
       'sidebar.hide': '« 세션 목록 숨기기',
       'sidebar.show': '세션 목록 보이기',
-      'sidebar.empty': '저장된 세션이 없습니다.\n＋ 버튼으로 추가하세요.',
+      'context.copy': '복사',
+      'context.paste': '붙여넣기',
       'toolbar.theme': '테마',
       'toolbar.fontSize': '글자 크기',
       'toolbar.fontMinus': '글자 작게 (Ctrl + -)',
@@ -402,7 +407,8 @@ const LOCALES = {
       'sidebar.new': '新しいセッション',
       'sidebar.hide': '« セッション一覧を隠す',
       'sidebar.show': 'セッション一覧を表示',
-      'sidebar.empty': '保存されたセッションがありません。\n＋ボタンで追加してください。',
+      'context.copy': 'コピー',
+      'context.paste': '貼り付け',
       'toolbar.theme': 'テーマ',
       'toolbar.fontSize': '文字サイズ',
       'toolbar.fontMinus': '小さく (Ctrl + -)',
@@ -455,7 +461,8 @@ const LOCALES = {
       'sidebar.new': '新建会话',
       'sidebar.hide': '« 隐藏会话列表',
       'sidebar.show': '显示会话列表',
-      'sidebar.empty': '没有保存的会话。\n点按 ＋ 添加。',
+      'context.copy': '复制',
+      'context.paste': '粘贴',
       'toolbar.theme': '主题',
       'toolbar.fontSize': '字体大小',
       'toolbar.fontMinus': '缩小 (Ctrl + -)',
@@ -517,6 +524,45 @@ function setSidebar(hidden, { persist = true } = {}) {
   if (persist) api.saveSettings({ sidebarHidden: hidden }).catch(console.error);
   // pane ResizeObservers fire during/after the width transition and refit terminals
 }
+
+// ---------- right-click context menu (copy / paste) ----------
+
+let ctxPaneId = null;
+
+function hideCtxMenu() {
+  els.ctxMenu.hidden = true;
+  ctxPaneId = null;
+}
+
+function showCtxMenu(pane, x, y) {
+  ctxPaneId = pane ? pane.id : null;
+  els.ctxCopy.disabled = !pane || !pane.term || !pane.term.hasSelection();
+  els.ctxPaste.disabled = !pane || !pane.connId;
+  els.ctxMenu.hidden = false;
+  const mw = els.ctxMenu.offsetWidth || 150;
+  const mh = els.ctxMenu.offsetHeight || 66;
+  els.ctxMenu.style.left = `${Math.max(4, Math.min(x, window.innerWidth - mw - 4))}px`;
+  els.ctxMenu.style.top = `${Math.max(4, Math.min(y, window.innerHeight - mh - 4))}px`;
+}
+
+function ctxCopyAction() {
+  const pane = panes.get(ctxPaneId);
+  if (!pane || !pane.term) return;
+  const text = pane.term.getSelection();
+  if (text) api.writeClipboard(text).catch(console.error);
+}
+
+async function ctxPasteAction() {
+  const pane = panes.get(ctxPaneId);
+  if (!pane || !pane.connId) return;
+  try {
+    const text = await api.readClipboard();
+    if (text) pane.term.paste(text);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 
 function applyLang(l) {
   lang = LOCALES[l] ? l : 'ko';
@@ -1108,10 +1154,23 @@ async function init() {
   els.btnNew.addEventListener('click', () => openDialog(null));
   els.btnHideSidebar.addEventListener('click', () => setSidebar(true));
   els.btnShowSidebar.addEventListener('click', () => setSidebar(false));
+  els.ctxCopy.addEventListener('click', () => { ctxCopyAction(); hideCtxMenu(); });
+  els.ctxPaste.addEventListener('click', () => { ctxPasteAction(); hideCtxMenu(); });
+  document.addEventListener('click', (e) => {
+    if (!els.ctxMenu.hidden && !e.target.closest('#ctxMenu')) hideCtxMenu();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideCtxMenu(); });
   // language menu
   els.btnLang.addEventListener('click', (e) => {
     e.stopPropagation();
     els.langMenu.hidden = !els.langMenu.hidden;
+  });
+  // right-click menu anywhere in the terminal area (pane under cursor, or active pane)
+  els.paneArea.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const paneEl = e.target.closest('.pane');
+    const pane = (paneEl && panes.get(paneEl.dataset.id)) || panes.get(activePaneId) || [...panes.values()][0] || null;
+    showCtxMenu(pane, e.clientX, e.clientY);
   });
   els.langMenu.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-lang]');

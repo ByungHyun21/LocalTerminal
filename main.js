@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, ipcMain, safeStorage, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, safeStorage, dialog, clipboard } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -252,11 +252,15 @@ ipcMain.handle('settings:save', (_evt, patch) => {
 
 // ---------- misc ----------
 
+ipcMain.handle('clipboard:readText', () => clipboard.readText());
+
+ipcMain.handle('clipboard:writeText', (_evt, text) => { clipboard.writeText(String(text || '')); });
+
 ipcMain.handle('pickKeyFile', async () => {
   const result = await dialog.showOpenDialog(win, {
-    title: '개인 키 파일 선택',
+    title: 'Select private key file',
     properties: ['openFile'],
-    filters: [{ name: '키 파일', extensions: ['pem', 'key', 'id_rsa', 'id_ed25519', 'ppk'] }],
+    filters: [{ name: 'Key files', extensions: ['pem', 'key', 'id_rsa', 'id_ed25519', 'ppk'] }],
   });
   return result.canceled || result.filePaths.length === 0 ? '' : result.filePaths[0];
 });
