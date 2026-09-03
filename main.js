@@ -237,7 +237,7 @@ ipcMain.handle('sessions:delete', (_evt, id) => {
 
 // ---------- settings ----------
 
-const DEFAULT_SETTINGS = { theme: 'nord', fontSize: 14, lang: 'ko' };
+const DEFAULT_SETTINGS = { theme: 'nord', fontSize: 14, lang: 'ko', sidebarHidden: false };
 
 ipcMain.handle('settings:get', () => ({
   ...DEFAULT_SETTINGS,

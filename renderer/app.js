@@ -233,6 +233,8 @@ const els = {
   overlay: $('overlay'),
   overlayMsg: $('overlayMsg'),
   langFlag: $('langFlag'),
+  btnHideSidebar: $('btnHideSidebar'),
+  btnShowSidebar: $('btnShowSidebar'),
   langMenu: $('langMenu'),
   btnLang: $('btnLang'),
   backdrop: $('dialogBackdrop'),
@@ -292,6 +294,8 @@ const LOCALES = {
       'lang.title': 'Language',
       'sidebar.title': 'SSH Sessions',
       'sidebar.new': 'New session',
+      'sidebar.hide': '« Hide sessions',
+      'sidebar.show': 'Show sessions',
       'sidebar.empty': 'No saved sessions.\nAdd one with the + button.',
       'toolbar.theme': 'Theme',
       'toolbar.fontSize': 'Font size',
@@ -343,6 +347,8 @@ const LOCALES = {
       'lang.title': '언어',
       'sidebar.title': 'SSH 세션',
       'sidebar.new': '새 세션 추가',
+      'sidebar.hide': '« 세션 목록 숨기기',
+      'sidebar.show': '세션 목록 보이기',
       'sidebar.empty': '저장된 세션이 없습니다.\n＋ 버튼으로 추가하세요.',
       'toolbar.theme': '테마',
       'toolbar.fontSize': '글자 크기',
@@ -394,6 +400,8 @@ const LOCALES = {
       'lang.title': '言語',
       'sidebar.title': 'SSH セッション',
       'sidebar.new': '新しいセッション',
+      'sidebar.hide': '« セッション一覧を隠す',
+      'sidebar.show': 'セッション一覧を表示',
       'sidebar.empty': '保存されたセッションがありません。\n＋ボタンで追加してください。',
       'toolbar.theme': 'テーマ',
       'toolbar.fontSize': '文字サイズ',
@@ -445,6 +453,8 @@ const LOCALES = {
       'lang.title': '语言',
       'sidebar.title': 'SSH 会话',
       'sidebar.new': '新建会话',
+      'sidebar.hide': '« 隐藏会话列表',
+      'sidebar.show': '显示会话列表',
       'sidebar.empty': '没有保存的会话。\n点按 ＋ 添加。',
       'toolbar.theme': '主题',
       'toolbar.fontSize': '字体大小',
@@ -499,6 +509,13 @@ function T(key, vars) {
     for (const [k, v] of Object.entries(vars)) s = s.split(`{${k}}`).join(String(v));
   }
   return s;
+}
+
+function setSidebar(hidden, { persist = true } = {}) {
+  document.getElementById('sidebar').classList.toggle('collapsed', hidden);
+  els.btnShowSidebar.hidden = !hidden;
+  if (persist) api.saveSettings({ sidebarHidden: hidden }).catch(console.error);
+  // pane ResizeObservers fire during/after the width transition and refit terminals
 }
 
 function applyLang(l) {
@@ -1019,6 +1036,7 @@ async function init() {
 
   applyThemeVars(settings.theme);
   applyLang(lang);
+  if (settings.sidebarHidden) setSidebar(true, { persist: false });
   els.fontSizeLabel.textContent = String(settings.fontSize);
 
 
@@ -1088,6 +1106,8 @@ async function init() {
     if (pane && pane.connId) api.disconnect(pane.connId).catch(console.error);
   });
   els.btnNew.addEventListener('click', () => openDialog(null));
+  els.btnHideSidebar.addEventListener('click', () => setSidebar(true));
+  els.btnShowSidebar.addEventListener('click', () => setSidebar(false));
   // language menu
   els.btnLang.addEventListener('click', (e) => {
     e.stopPropagation();
