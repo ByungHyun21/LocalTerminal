@@ -276,6 +276,7 @@ function createWindow() {
     backgroundColor: '#1b1e27',
     autoHideMenuBar: true,
     title: 'LocalTerminal',
+    icon: path.join(__dirname, 'build', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
