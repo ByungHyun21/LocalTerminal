@@ -1,0 +1,50 @@
+{
+  "name": "localterminal",
+  "productName": "LocalTerminal",
+  "version": "1.0.0",
+  "description": "SSH terminal client with saved sessions, themes and font controls",
+  "main": "main.js",
+  "author": "localTerminal",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "ssh2": "^1.17.0"
+  },
+  "build": {
+    "npmRebuild": false,
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "portable": {
+      "artifactName": "LocalTerminal-Portable-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": true,
+      "artifactName": "LocalTerminal-Setup-${version}.exe"
+    }
+  },
+  "allowScripts": {
+    "electron@37.10.3": true,
+    "ssh2@1.17.0": true,
+    "electron-winstaller@5.4.0": true
+  }
+}
