@@ -54,42 +54,17 @@ body {
   flex: 1;
 }
 
-.sidebar-footer {
-  border-top: 1px solid var(--border);
-  padding: 6px;
-}
-
-.sidebar-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 100%;
-  background: transparent;
-  border: none;
-  border-radius: 5px;
-  color: var(--muted);
-  font-size: 12px;
-  padding: 6px 4px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.sidebar-toggle:hover { background: var(--panel2); color: var(--text); }
-
 .show-sidebar-btn {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  z-index: 10;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 5px;
   color: var(--muted);
   font-size: 15px;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 26px;
+  min-width: 28px;
   cursor: pointer;
+  line-height: 1;
 }
 
 .show-sidebar-btn:hover { background: var(--panel2); color: var(--text); border-color: var(--accent); }

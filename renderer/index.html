@@ -25,17 +25,16 @@
             </div>
           </div>
           <span data-i18n="sidebar.title">SSH 세션</span>
+          <button id="btnHideSidebar" class="icon-btn" data-i18n-title="sidebar.hide" title="« 세션 목록 숨기기">«</button>
           <button id="btnNew" class="icon-btn" data-i18n-title="sidebar.new" title="새 세션 추가">＋</button>
         </div>
         <ul id="sessionList"></ul>
-        <div class="sidebar-footer">
-          <button id="btnHideSidebar" class="sidebar-toggle" data-i18n="sidebar.hide">« 세션 목록 숨기기</button>
-        </div>
       </div>
     </aside>
 
     <main id="main">
       <div id="toolbar">
+        <button id="btnShowSidebar" class="show-sidebar-btn" data-i18n-title="sidebar.show" title="세션 목록 보이기" hidden>»</button>
         <div id="status">
           <span id="statusDot" class="dot"></span>
           <span id="statusText">연결 없음</span>
@@ -54,7 +53,6 @@
 
       <div id="paneArea">
         <div id="panes"></div>
-        <button id="btnShowSidebar" class="show-sidebar-btn" data-i18n-title="sidebar.show" title="세션 목록 보이기" hidden>»</button>
         <div id="overlay" class="overlay">
           <div class="overlay-card">
             <h2 id="overlayTitle">LocalTerminal</h2>
