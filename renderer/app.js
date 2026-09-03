@@ -212,6 +212,7 @@ let settings = { theme: 'nord', fontSize: DEFAULT_FONT_SIZE };
 let paneRoot = null; // {kind:'pane',paneId} | {kind:'split',dir:'h'|'v',children:[],sizes:[]}
 let activePaneId = null;
 let paneSeq = 0;
+let lang = 'ko';
 const panes = new Map(); // paneId -> pane
 
 // ---------- dom ----------
@@ -230,6 +231,10 @@ const els = {
   paneArea: $('paneArea'),
   panes: $('panes'),
   overlay: $('overlay'),
+  overlayMsg: $('overlayMsg'),
+  langFlag: $('langFlag'),
+  langMenu: $('langMenu'),
+  btnLang: $('btnLang'),
   backdrop: $('dialogBackdrop'),
   form: $('sessionForm'),
   dialogTitle: $('dialogTitle'),
@@ -278,6 +283,245 @@ function adjustFont(delta) {
 
 // ---------- pane tree ----------
 
+// ---------- i18n ----------
+
+const LOCALES = {
+  en: {
+    label: 'English', flag: 'flags/us.svg',
+    strings: {
+      'lang.title': 'Language',
+      'sidebar.title': 'SSH Sessions',
+      'sidebar.new': 'New session',
+      'sidebar.empty': 'No saved sessions.\nAdd one with the + button.',
+      'toolbar.theme': 'Theme',
+      'toolbar.fontSize': 'Font size',
+      'toolbar.fontMinus': 'Smaller (Ctrl + -)',
+      'toolbar.fontPlus': 'Bigger (Ctrl + =)',
+      'toolbar.disconnect': 'Disconnect active pane',
+      'status.noConnection': 'Not connected',
+      'status.connecting': '{name} connecting…',
+      'status.connected': '{name} · connected',
+      'status.emptyPane': 'Empty pane — double-click a session',
+      'overlay.msg': '<b>Double-click</b> a session on the left to connect in the active pane.<br>If it is busy, a <b>new pane opens to the right</b>.',
+      'pane.empty': 'Empty terminal',
+      'pane.connectingSuffix': '…connecting',
+      'pane.errorSuffix': '— error',
+      'pane.splitH': 'Split right',
+      'pane.splitV': 'Split down',
+      'pane.close': 'Close pane',
+      'dialog.new': 'New session',
+      'dialog.edit': 'Edit session',
+      'dialog.name': 'Name',
+      'dialog.namePh': 'My server',
+      'dialog.host': 'Host *',
+      'dialog.hostPh': '192.168.0.10',
+      'dialog.port': 'Port',
+      'dialog.user': 'Username *',
+      'dialog.userPh': 'root',
+      'dialog.auth': 'Auth method',
+      'dialog.authPassword': 'Password',
+      'dialog.authKey': 'Private key',
+      'dialog.password': 'Password *',
+      'dialog.keyFile': 'Key file *',
+      'dialog.keyFilePh': 'C:\\Users\\me\\.ssh\\id_rsa',
+      'dialog.browse': 'Browse…',
+      'dialog.passphrase': 'Passphrase',
+      'dialog.passphrasePh': 'Leave empty if none',
+      'dialog.savedPh': 'Saved — enter only to change',
+      'dialog.cancel': 'Cancel',
+      'dialog.save': 'Save',
+      'dialog.pwRequired': 'Enter a password',
+      'dialog.saveFailed': 'Save failed: ',
+      'session.edit': 'Edit',
+      'session.delete': 'Delete',
+      'session.deleteConfirm': 'Delete session "{name}"?',
+    },
+  },
+  ko: {
+    label: '한국어', flag: 'flags/kr.svg',
+    strings: {
+      'lang.title': '언어',
+      'sidebar.title': 'SSH 세션',
+      'sidebar.new': '새 세션 추가',
+      'sidebar.empty': '저장된 세션이 없습니다.\n＋ 버튼으로 추가하세요.',
+      'toolbar.theme': '테마',
+      'toolbar.fontSize': '글자 크기',
+      'toolbar.fontMinus': '글자 작게 (Ctrl + -)',
+      'toolbar.fontPlus': '글자 크게 (Ctrl + =)',
+      'toolbar.disconnect': '활성 창 연결 끊기',
+      'status.noConnection': '연결 없음',
+      'status.connecting': '{name} 연결 중...',
+      'status.connected': '{name} · 연결됨',
+      'status.emptyPane': '빈 터미널 — 세션을 더블클릭하세요',
+      'overlay.msg': '왼쪽에서 세션을 <b>더블클릭</b>하면 활성 창에 연결됩니다.<br>활성 창이 사용 중이면 <b>오른쪽에 새 창</b>을 만들어 연결합니다.',
+      'pane.empty': '빈 터미널',
+      'pane.connectingSuffix': '…연결 중',
+      'pane.errorSuffix': '— 오류',
+      'pane.splitH': '오른쪽으로 분할',
+      'pane.splitV': '아래로 분할',
+      'pane.close': '창 닫기',
+      'dialog.new': '새 세션',
+      'dialog.edit': '세션 편집',
+      'dialog.name': '이름',
+      'dialog.namePh': '내 서버',
+      'dialog.host': '호스트 *',
+      'dialog.hostPh': '192.168.0.10',
+      'dialog.port': '포트',
+      'dialog.user': '사용자 *',
+      'dialog.userPh': 'root',
+      'dialog.auth': '인증 방식',
+      'dialog.authPassword': '비밀번호',
+      'dialog.authKey': '개인 키',
+      'dialog.password': '비밀번호 *',
+      'dialog.keyFile': '키 파일 *',
+      'dialog.keyFilePh': 'C:\\Users\\me\\.ssh\\id_rsa',
+      'dialog.browse': '찾아보기',
+      'dialog.passphrase': '패스프레이즈',
+      'dialog.passphrasePh': '없으면 비워 두세요',
+      'dialog.savedPh': '저장됨 — 변경할 때만 입력',
+      'dialog.cancel': '취소',
+      'dialog.save': '저장',
+      'dialog.pwRequired': '비밀번호를 입력하세요',
+      'dialog.saveFailed': '저장 실패: ',
+      'session.edit': '편집',
+      'session.delete': '삭제',
+      'session.deleteConfirm': '"{name}" 세션을 삭제할까요?',
+    },
+  },
+  ja: {
+    label: '日本語', flag: 'flags/jp.svg',
+    strings: {
+      'lang.title': '言語',
+      'sidebar.title': 'SSH セッション',
+      'sidebar.new': '新しいセッション',
+      'sidebar.empty': '保存されたセッションがありません。\n＋ボタンで追加してください。',
+      'toolbar.theme': 'テーマ',
+      'toolbar.fontSize': '文字サイズ',
+      'toolbar.fontMinus': '小さく (Ctrl + -)',
+      'toolbar.fontPlus': '大きく (Ctrl + =)',
+      'toolbar.disconnect': 'アクティブペーンを切断',
+      'status.noConnection': '接続なし',
+      'status.connecting': '{name} 接続中…',
+      'status.connected': '{name} · 接続済み',
+      'status.emptyPane': '空のペーン — セッションをダブルクリック',
+      'overlay.msg': '左のセッションを<b>ダブルクリック</b>するとアクティブペーンに接続します。<br>使用中の場合は<b>右に新しいペーン</b>を作成して接続します。',
+      'pane.empty': '空のターミナル',
+      'pane.connectingSuffix': '…接続中',
+      'pane.errorSuffix': '— エラー',
+      'pane.splitH': '右に分割',
+      'pane.splitV': '下に分割',
+      'pane.close': 'ペーンを閉じる',
+      'dialog.new': '新しいセッション',
+      'dialog.edit': 'セッション編集',
+      'dialog.name': '名前',
+      'dialog.namePh': 'マイサーバー',
+      'dialog.host': 'ホスト *',
+      'dialog.hostPh': '192.168.0.10',
+      'dialog.port': 'ポート',
+      'dialog.user': 'ユーザー名 *',
+      'dialog.userPh': 'root',
+      'dialog.auth': '認証方式',
+      'dialog.authPassword': 'パスワード',
+      'dialog.authKey': '秘密鍵',
+      'dialog.password': 'パスワード *',
+      'dialog.keyFile': '鍵ファイル *',
+      'dialog.keyFilePh': 'C:\\Users\\me\\.ssh\\id_rsa',
+      'dialog.browse': '参照…',
+      'dialog.passphrase': 'パスフレーズ',
+      'dialog.passphrasePh': 'なければ空欄',
+      'dialog.savedPh': '保存済み — 変更時のみ入力',
+      'dialog.cancel': 'キャンセル',
+      'dialog.save': '保存',
+      'dialog.pwRequired': 'パスワードを入力してください',
+      'dialog.saveFailed': '保存に失敗: ',
+      'session.edit': '編集',
+      'session.delete': '削除',
+      'session.deleteConfirm': 'セッション「{name}」を削除しますか？',
+    },
+  },
+  zh: {
+    label: '中文', flag: 'flags/cn.svg',
+    strings: {
+      'lang.title': '语言',
+      'sidebar.title': 'SSH 会话',
+      'sidebar.new': '新建会话',
+      'sidebar.empty': '没有保存的会话。\n点按 ＋ 添加。',
+      'toolbar.theme': '主题',
+      'toolbar.fontSize': '字体大小',
+      'toolbar.fontMinus': '缩小 (Ctrl + -)',
+      'toolbar.fontPlus': '放大 (Ctrl + =)',
+      'toolbar.disconnect': '断开当前窗格',
+      'status.noConnection': '未连接',
+      'status.connecting': '{name} 连接中…',
+      'status.connected': '{name} · 已连接',
+      'status.emptyPane': '空窗格 — 双击会话连接',
+      'overlay.msg': '<b>双击</b>左侧会话即可连接到当前窗格。<br>若窗格正被占用，会在<b>右侧新建窗格</b>连接。',
+      'pane.empty': '空终端',
+      'pane.connectingSuffix': '…连接中',
+      'pane.errorSuffix': '— 错误',
+      'pane.splitH': '向右分割',
+      'pane.splitV': '向下分割',
+      'pane.close': '关闭窗格',
+      'dialog.new': '新建会话',
+      'dialog.edit': '编辑会话',
+      'dialog.name': '名称',
+      'dialog.namePh': '我的服务器',
+      'dialog.host': '主机 *',
+      'dialog.hostPh': '192.168.0.10',
+      'dialog.port': '端口',
+      'dialog.user': '用户名 *',
+      'dialog.userPh': 'root',
+      'dialog.auth': '认证方式',
+      'dialog.authPassword': '密码',
+      'dialog.authKey': '私钥',
+      'dialog.password': '密码 *',
+      'dialog.keyFile': '密钥文件 *',
+      'dialog.keyFilePh': 'C:\\Users\\me\\.ssh\\id_rsa',
+      'dialog.browse': '浏览…',
+      'dialog.passphrase': '口令',
+      'dialog.passphrasePh': '没有请留空',
+      'dialog.savedPh': '已保存 — 仅修改时输入',
+      'dialog.cancel': '取消',
+      'dialog.save': '保存',
+      'dialog.pwRequired': '请输入密码',
+      'dialog.saveFailed': '保存失败：',
+      'session.edit': '编辑',
+      'session.delete': '删除',
+      'session.deleteConfirm': '删除会话 “{name}”？',
+    },
+  },
+};
+
+function T(key, vars) {
+  const table = (LOCALES[lang] || LOCALES.ko).strings;
+  let s = table[key] != null ? table[key] : (LOCALES.en.strings[key] != null ? LOCALES.en.strings[key] : key);
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) s = s.split(`{${k}}`).join(String(v));
+  }
+  return s;
+}
+
+function applyLang(l) {
+  lang = LOCALES[l] ? l : 'ko';
+  document.documentElement.lang = lang;
+  els.langFlag.src = LOCALES[lang].flag;
+  for (const el of document.querySelectorAll('[data-i18n]')) {
+    el.textContent = T(el.dataset.i18n);
+  }
+  for (const el of document.querySelectorAll('[data-i18n-title]')) {
+    el.title = T(el.dataset.i18nTitle);
+  }
+  for (const el of document.querySelectorAll('[data-i18n-ph]')) {
+    el.placeholder = T(el.dataset.i18nPh);
+  }
+  els.overlayMsg.innerHTML = T('overlay.msg');
+  renderList();
+  for (const p of panes.values()) updatePaneHeader(p);
+  updateToolbarStatus();
+  els.langMenu.hidden = true;
+  api.saveSettings({ lang }).catch(console.error);
+}
+
 function createPane() {
   const id = `p${++paneSeq}`;
   const el = document.createElement('div');
@@ -286,11 +530,11 @@ function createPane() {
   el.innerHTML = `
     <div class="pane-header">
       <span class="pane-dot dot"></span>
-      <span class="pane-title">빈 터미널</span>
+      <span class="pane-title"></span>
       <span class="pane-actions">
-        <button type="button" class="icon-btn" data-act="split-h" title="오른쪽으로 분할">◫</button>
-        <button type="button" class="icon-btn" data-act="split-v" title="아래로 분할">⊟</button>
-        <button type="button" class="icon-btn" data-act="close" title="창 닫기">✕</button>
+        <button type="button" class="icon-btn" data-act="split-h" data-i18n-title="pane.splitH" title="">◫</button>
+        <button type="button" class="icon-btn" data-act="split-v" data-i18n-title="pane.splitV" title="">⊟</button>
+        <button type="button" class="icon-btn" data-act="close" data-i18n-title="pane.close" title="">✕</button>
       </span>
     </div>
     <div class="pane-term"></div>`;
@@ -304,6 +548,10 @@ function createPane() {
     sessionId: null, connId: null, status: 'idle', errorMsg: '',
   };
 
+  el.querySelector('[data-act="split-h"]').title = T('pane.splitH');
+  el.querySelector('[data-act="split-v"]').title = T('pane.splitV');
+  el.querySelector('[data-act="close"]').title = T('pane.close');
+  pane.titleEl.textContent = T('pane.empty');
   el.addEventListener('mousedown', () => setActive(id), true);
   el.querySelector('[data-act="split-h"]').addEventListener('click', () => splitPane('h'));
   el.querySelector('[data-act="split-v"]').addEventListener('click', () => splitPane('v'));
@@ -534,15 +782,15 @@ function paneKeyHandler(pane, ev) {
 
 function sessionLabel(pane) {
   const s = sessions.find((x) => x.id === pane.sessionId);
-  if (!s) return '빈 터미널';
+  if (!s) return T('pane.empty');
   return s.name || s.host;
 }
 
 function updatePaneHeader(pane) {
   const label = sessionLabel(pane);
   let title = label;
-  if (pane.status === 'connecting') title = `${label} …연결 중`;
-  else if (pane.status === 'error') title = `${label} — 오류`;
+  if (pane.status === 'connecting') title = label + ' ' + T('pane.connectingSuffix');
+  else if (pane.status === 'error') title = label + ' ' + T('pane.errorSuffix');
   pane.titleEl.textContent = title;
   pane.titleEl.title = pane.errorMsg || label;
   pane.dotEl.className = `pane-dot dot${pane.status === 'connecting' ? ' connecting' : pane.status === 'connected' ? ' connected' : pane.status === 'error' ? ' error' : ''}`;
@@ -553,22 +801,22 @@ function updateToolbarStatus() {
   els.btnDisconnect.hidden = !(pane && pane.connId);
   if (!pane) {
     els.statusDot.className = 'dot';
-    els.statusText.textContent = '연결 없음';
+    els.statusText.textContent = T('status.noConnection');
     return;
   }
   const label = sessionLabel(pane);
   if (pane.status === 'connecting') {
     els.statusDot.className = 'dot connecting';
-    els.statusText.textContent = `${label} 연결 중...`;
+    els.statusText.textContent = T('status.connecting', { name: label });
   } else if (pane.status === 'connected') {
     els.statusDot.className = 'dot connected';
-    els.statusText.textContent = `${label} · 연결됨`;
+    els.statusText.textContent = T('status.connected', { name: label });
   } else if (pane.status === 'error') {
     els.statusDot.className = 'dot error';
-    els.statusText.textContent = pane.errorMsg || '오류';
+    els.statusText.textContent = pane.errorMsg || T('status.error');
   } else {
     els.statusDot.className = 'dot';
-    els.statusText.textContent = '빈 터미널 — 세션을 더블클릭하세요';
+    els.statusText.textContent = T('status.emptyPane');
   }
 }
 
@@ -625,7 +873,7 @@ function renderList() {
     const li = document.createElement('li');
     li.className = 'empty-list';
     li.style.whiteSpace = 'pre-line';
-    li.textContent = '저장된 세션이 없습니다.\n＋ 버튼으로 추가하세요.';
+    li.textContent = T('sidebar.empty');
     els.list.appendChild(li);
     return;
   }
@@ -647,15 +895,13 @@ function renderList() {
     const actions = document.createElement('div');
     actions.className = 'session-actions';
     const edit = document.createElement('button');
-    edit.type = 'button';
-    edit.className = 'icon-btn';
-    edit.title = '편집';
+    edit.title = T('session.edit');
     edit.textContent = '✎';
     edit.addEventListener('click', (e) => { e.stopPropagation(); openDialog(s); });
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'icon-btn';
-    del.title = '삭제';
+    del.title = T('session.delete');
     del.textContent = '✕';
     del.addEventListener('click', (e) => { e.stopPropagation(); removeSession(s); });
     actions.append(edit, del);
@@ -672,7 +918,7 @@ let editingId = null;
 
 function openDialog(session) {
   editingId = session ? session.id : null;
-  els.dialogTitle.textContent = session ? '세션 편집' : '새 세션';
+  els.dialogTitle.textContent = session ? T('dialog.edit') : T('dialog.new');
   els.form.reset();
   els.form.elements.name.value = session ? (session.name || '') : '';
   els.form.elements.host.value = session ? session.host : '';
@@ -682,12 +928,12 @@ function openDialog(session) {
   els.form.elements.keyPath.value = session ? (session.keyPath || '') : '';
   els.form.elements.password.placeholder =
     session && session.authMethod === 'password' && session.hasPassword
-      ? '저장됨 — 변경할 때만 입력'
+      ? T('dialog.savedPh')
       : '';
   els.form.elements.passphrase.placeholder =
     session && session.authMethod === 'key' && session.hasPassphrase
-      ? '저장됨 — 변경할 때만 입력'
-      : '없으면 비워 두세요';
+      ? T('dialog.savedPh')
+      : T('dialog.passphrasePh');
   syncAuthFields();
   els.backdrop.hidden = false;
   els.form.elements.host.focus();
@@ -703,9 +949,8 @@ function syncAuthFields() {
   els.passwordField.hidden = keyAuth;
   els.keyFields.hidden = !keyAuth;
   els.form.elements.keyPath.required = keyAuth;
-  els.passwordField.querySelector('span').textContent = keyAuth ? '비밀번호' : '비밀번호 *';
+  els.passwordField.querySelector('span').textContent = keyAuth ? T('dialog.authPassword') : T('dialog.password');
 }
-
 async function submitDialog(e) {
   e.preventDefault();
   const f = els.form.elements;
@@ -721,7 +966,7 @@ async function submitDialog(e) {
     return;
   }
   if (authMethod === 'password' && !editingId && !f.password.value) {
-    f.password.setCustomValidity('비밀번호를 입력하세요.');
+    f.password.setCustomValidity(T('dialog.pwRequired'));
     f.password.reportValidity();
     f.password.setCustomValidity('');
     return;
@@ -734,7 +979,6 @@ async function submitDialog(e) {
     port,
     username,
     authMethod,
-    keyPath,
     password: authMethod === 'password' ? f.password.value : '',
     passphrase: authMethod === 'key' ? f.passphrase.value : '',
   };
@@ -747,13 +991,13 @@ async function submitDialog(e) {
     renderList();
     closeDialog();
   } catch (err) {
-    alert(`저장 실패: ${err.message || err}`);
+    alert(T('dialog.saveFailed') + (err.message || err));
   }
 }
 
 function removeSession(session) {
   const label = session.name || session.host;
-  if (!confirm(`"${label}" 세션을 삭제할까요?`)) return;
+  if (!confirm(T('session.deleteConfirm', { name: label }))) return;
   api.deleteSession(session.id).then(() => {
     sessions = sessions.filter((s) => s.id !== session.id);
     [...panes.values()]
@@ -768,11 +1012,15 @@ function removeSession(session) {
 
 async function init() {
   settings = await api.getSettings();
+  if (!LOCALES[settings.lang]) settings.lang = 'ko';
+  lang = settings.lang;
   if (!THEMES[settings.theme]) settings.theme = 'nord';
   if (!Number.isInteger(settings.fontSize)) settings.fontSize = DEFAULT_FONT_SIZE;
 
   applyThemeVars(settings.theme);
+  applyLang(lang);
   els.fontSizeLabel.textContent = String(settings.fontSize);
+
 
   // ssh events
   api.onData((connId, chunk) => {
@@ -840,6 +1088,18 @@ async function init() {
     if (pane && pane.connId) api.disconnect(pane.connId).catch(console.error);
   });
   els.btnNew.addEventListener('click', () => openDialog(null));
+  // language menu
+  els.btnLang.addEventListener('click', (e) => {
+    e.stopPropagation();
+    els.langMenu.hidden = !els.langMenu.hidden;
+  });
+  els.langMenu.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-lang]');
+    if (btn) applyLang(btn.dataset.lang);
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.lang-wrap')) els.langMenu.hidden = true;
+  });
   els.btnCancel.addEventListener('click', closeDialog);
   els.backdrop.addEventListener('click', (e) => {
     if (e.target === els.backdrop) closeDialog();

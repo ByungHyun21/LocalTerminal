@@ -95,7 +95,7 @@ ipcMain.handle('ssh:connect', (_evt, { sessionId, cols, rows }) => {
   const connId = crypto.randomUUID();
 
   if (!s) {
-    sendStatus(connId, 'error', '세션을 찾을 수 없습니다.');
+    sendStatus(connId, 'error', 'Session not found.');
     return connId;
   }
 
@@ -111,10 +111,10 @@ ipcMain.handle('ssh:connect', (_evt, { sessionId, cols, rows }) => {
 
   let startupError = null;
   if (s.authMethod === 'key') {
-    if (!s.keyPath) startupError = '개인 키 파일 경로가 설정되지 않았습니다.';
+    if (!s.keyPath) startupError = 'Private key path is not set.';
     else {
       try { opts.privateKey = fs.readFileSync(s.keyPath); }
-      catch (err) { startupError = `키 파일을 읽을 수 없습니다: ${err.message}`; }
+      catch (err) { startupError = `Cannot read key file: ${err.message}`; }
     }
     if (!startupError) {
       const passphrase = decryptSecret(s.passphrase);
@@ -122,7 +122,7 @@ ipcMain.handle('ssh:connect', (_evt, { sessionId, cols, rows }) => {
     }
   } else {
     const password = decryptSecret(s.password);
-    if (!password) startupError = '저장된 비밀번호가 없습니다. 세션을 편집해 주세요.';
+    if (!password) startupError = 'No saved password — edit the session.';
     else opts.password = password;
   }
 
@@ -150,7 +150,7 @@ ipcMain.handle('ssh:connect', (_evt, { sessionId, cols, rows }) => {
       stream.on('close', () => {
         if (connections.get(connId) && connections.get(connId).stream === stream) {
           teardownConn(connId);
-          sendStatus(connId, 'closed', '연결이 닫혔습니다.');
+          sendStatus(connId, 'closed', 'Connection closed.');
         }
       });
       sendStatus(connId, 'connected', '');
@@ -165,7 +165,7 @@ ipcMain.handle('ssh:connect', (_evt, { sessionId, cols, rows }) => {
   client.on('close', () => {
     if (connections.has(connId)) {
       teardownConn(connId);
-      sendStatus(connId, 'closed', '연결이 닫혔습니다.');
+      sendStatus(connId, 'closed', 'Connection closed.');
     }
   });
 
@@ -191,7 +191,7 @@ ipcMain.handle('ssh:resize', (_evt, connId, cols, rows) => {
 
 ipcMain.handle('ssh:disconnect', (_evt, connId) => {
   teardownConn(connId);
-  sendStatus(connId, 'closed', '연결을 종료했습니다.');
+  sendStatus(connId, 'closed', 'Disconnected.');
 });
 
 // ---------- session CRUD ----------
@@ -217,7 +217,7 @@ ipcMain.handle('sessions:save', (_evt, input) => {
   let rec;
   if (pub.id) {
     rec = sessions.find((x) => x.id === pub.id);
-    if (!rec) throw new Error('세션을 찾을 수 없습니다.');
+    if (!rec) throw new Error('Session not found.');
     Object.assign(rec, pub);
     applySecrets(rec);
   } else {
@@ -237,7 +237,7 @@ ipcMain.handle('sessions:delete', (_evt, id) => {
 
 // ---------- settings ----------
 
-const DEFAULT_SETTINGS = { theme: 'nord', fontSize: 14 };
+const DEFAULT_SETTINGS = { theme: 'nord', fontSize: 14, lang: 'ko' };
 
 ipcMain.handle('settings:get', () => ({
   ...DEFAULT_SETTINGS,

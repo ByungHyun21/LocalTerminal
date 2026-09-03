@@ -41,12 +41,71 @@ body {
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   font-weight: 600;
   font-size: 13px;
 }
+
+.sidebar-header > span[data-i18n] { flex: 1; }
+
+.lang-wrap { position: relative; }
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 4px;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.lang-btn:hover { background: var(--panel2); }
+
+.lang-btn img { width: 22px; height: 15px; display: block; border-radius: 2px; }
+
+.lang-caret {
+  font-size: 9px;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 120px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.lang-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 6px 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lang-menu button:hover { background: var(--panel2); }
+
+.lang-menu img { width: 22px; height: 15px; border-radius: 2px; }
+
 
 #sessionList {
   list-style: none;
@@ -342,7 +401,6 @@ select:focus, input:focus { border-color: var(--accent); }
 
 .overlay-card.error h2 { color: var(--danger); }
 
-.overlay-card .muted { color: var(--muted); font-size: 12px; }
 
 /* ---------- dialog ---------- */
 
